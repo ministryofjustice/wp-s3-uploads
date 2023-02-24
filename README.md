@@ -30,6 +30,16 @@ S3 Uploads is a WordPress plugin to store uploads on S3. S3 Uploads aims to be a
 
 It's focused on providing a highly robust S3 interface with no "bells and whistles", WP-Admin UI or much otherwise. It comes with some helpful WP-CLI commands for generating IAM users, listing files on S3 and Migrating your existing library to S3.
 
+## Fork Info
+
+We have forked this plugin for the following reasons. 
+
+1. The plugin relies on the AWS SDK which when loaded via composer this installs it to the vendor folder to the root of the site rather then where the plugin looks for it inside the plugin. So we have packaged the vendor folder with the plugin.
+
+2. The plugin does not by default load the class-s3-uploads-wp-cli-command.php class which it relies on causing an error so we have had to add a require_once to make sure this class is available.
+
+Hopefully these issues will be resolved in a future release of the orgiinal plugin.
+
 ## Requirements
 
 - PHP >= 7.4
