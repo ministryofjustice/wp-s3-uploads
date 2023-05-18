@@ -104,7 +104,7 @@ class Plugin {
 		$this->register_stream_wrapper();
 
 		add_filter( 'upload_dir', [ $this, 'filter_upload_dir' ] );
-		add_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 );
+		add_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 ); //Over 70 priority to run after eww image plugin
 		add_action( 'delete_attachment', [ $this, 'delete_attachment_files' ] );
 		add_filter( 'wp_read_image_metadata', [ $this, 'wp_filter_read_image_metadata' ], 10, 2 );
 		add_filter( 'wp_resource_hints', [ $this, 'wp_filter_resource_hints' ], 10, 2 );
