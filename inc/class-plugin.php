@@ -104,7 +104,7 @@ class Plugin {
 		$this->register_stream_wrapper();
 
 		add_filter( 'upload_dir', [ $this, 'filter_upload_dir' ] );
-		add_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 9 );
+		add_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 );
 		add_action( 'delete_attachment', [ $this, 'delete_attachment_files' ] );
 		add_filter( 'wp_read_image_metadata', [ $this, 'wp_filter_read_image_metadata' ], 10, 2 );
 		add_filter( 'wp_resource_hints', [ $this, 'wp_filter_resource_hints' ], 10, 2 );
@@ -128,7 +128,7 @@ class Plugin {
 
 		stream_wrapper_unregister( 's3' );
 		remove_filter( 'upload_dir', [ $this, 'filter_upload_dir' ] );
-		remove_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 9 );
+		remove_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 );
 		remove_filter( 'wp_handle_sideload_prefilter', [ $this, 'filter_sideload_move_temp_file_to_s3' ] );
 		remove_filter( 'wp_generate_attachment_metadata', [ $this, 'set_filesize_in_attachment_meta' ] );
 
