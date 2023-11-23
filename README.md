@@ -32,7 +32,7 @@ It's focused on providing a highly robust S3 interface with no "bells and whistl
 
 ## Fork Info
 
-We have forked this plugin for the following reasons. 
+We have forked this plugin for the following reasons..
 
 1. The plugin relies on the AWS SDK which when loaded via composer this installs it to the vendor folder to the root of the site rather then where the plugin looks for it inside the plugin. So we have packaged the vendor folder with the plugin.
 
