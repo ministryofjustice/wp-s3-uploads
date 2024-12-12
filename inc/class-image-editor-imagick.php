@@ -64,10 +64,23 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		$this->remote_filename = $this->file;
 		$this->file = $temp_filename;
 
-		$result = parent::load();
-
+		try {
+			$this->image = new Imagick();
+	
+			// Check if it's a PDF
+			if ( mime_content_type( $this->file ) === 'application/pdf' ) {
+				$this->image->readImage( $this->file . '[0]' ); // Load only the first page
+			} else {
+				$this->image->readImage( $this->file ); // Load normally for non-PDFs
+			}
+	
+			$this->update_size(); // Update size metadata
+		} catch ( Exception $e ) {
+			return new WP_Error( 'image_load_error', $e->getMessage(), $this->file );
+		}
+	
 		$this->file = $this->remote_filename;
-		return $result;
+		return true;
 	}
 
 	/**
