@@ -64,23 +64,10 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		$this->remote_filename = $this->file;
 		$this->file = $temp_filename;
 
-		try {
-			$this->image = new Imagick();
-	
-			// Check if it's a PDF
-			if ( mime_content_type( $this->file ) === 'application/pdf' ) {
-				$this->image->readImage( $this->file . '[0]' ); // Load only the first page
-			} else {
-				$this->image->readImage( $this->file ); // Load normally for non-PDFs
-			}
-	
-			$this->update_size(); // Update size metadata
-		} catch ( Exception $e ) {
-			return new WP_Error( 'image_load_error', $e->getMessage(), $this->file );
-		}
-	
+		$result = parent::load();
+
 		$this->file = $this->remote_filename;
-		return true;
+		return $result;
 	}
 
 	/**
@@ -113,16 +100,6 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		} else {
 			$temp_filename = false;
 		}
-
-		/*
-		MOJ FIX - Patch to prevent black PDF backgrounds.
-		*/
-		try {
-            $this->image->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
-            $this->image->setBackgroundColor('#ffffff');
-        } catch (Exception $exception) {
-            error_log($exception->getMessage());
-        }
 
 		/**
 		 * @var WP_Error|array{path: string, file: string, width: int, height: int, mime-type: string}

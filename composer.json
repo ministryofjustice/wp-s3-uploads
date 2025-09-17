@@ -1,6 +1,7 @@
 {
-	"name": "ministryofjustice/wp-s3-uploads",
+	"name": "humanmade/s3-uploads",
 	"description": "WordPress plugin to store uploads on S3",
+	"homepage": "https://github.com/humanmade/S3-Uploads",
 	"keywords": [
 		"wordpress"
 	],
@@ -10,9 +11,8 @@
 	},
 	"authors": [
 		{
-			"name":"Human Made Limited",
-			"email":"support@humanmade.co.uk",
-			"homepage":"http://hmn.md/"
+			"name": "Human Made",
+			"homepage": "https://humanmade.com/"
 		}
 	],
 	"support": {
