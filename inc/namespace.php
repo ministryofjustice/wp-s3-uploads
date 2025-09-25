@@ -3,6 +3,10 @@
 namespace S3_Uploads;
 
 function init() {
+
+	// Require AWS Autoloader file.
+	require_once dirname( __DIR__ ) . '/vendor/autoload.php';
+	
 	// Ensure the AWS SDK can be loaded.
 	if ( ! class_exists( '\\Aws\\S3\\S3Client' ) ) {
 		trigger_error( 'S3 Uploads requires the AWS SDK. Ensure Composer dependencies have been loaded.', E_USER_WARNING );
