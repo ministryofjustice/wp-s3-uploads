@@ -64,6 +64,9 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		$this->remote_filename = $this->file;
 		$this->file = $temp_filename;
 
+		/*
+		MOJ FIX - Load only first page of pdf
+		*/
 		try {
 			$this->image = new Imagick();
 	

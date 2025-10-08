@@ -104,7 +104,11 @@ class Plugin {
 		$this->register_stream_wrapper();
 
 		add_filter( 'upload_dir', [ $this, 'filter_upload_dir' ] );
-		add_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 ); //Over 70 priority to run after eww image plugin
+		
+		/*
+		MOJ FIX - Over 70 priority to run after eww image plugin
+		*/
+		add_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 );
 		add_action( 'delete_attachment', [ $this, 'delete_attachment_files' ] );
 		add_filter( 'wp_read_image_metadata', [ $this, 'wp_filter_read_image_metadata' ], 10, 2 );
 		add_filter( 'wp_resource_hints', [ $this, 'wp_filter_resource_hints' ], 10, 2 );
@@ -128,6 +132,10 @@ class Plugin {
 
 		stream_wrapper_unregister( 's3' );
 		remove_filter( 'upload_dir', [ $this, 'filter_upload_dir' ] );
+		
+		/*
+		MOJ FIX - Over 70 priority to run after eww image plugin
+		*/
 		remove_filter( 'wp_image_editors', [ $this, 'filter_editors' ], 73 );
 		remove_filter( 'wp_handle_sideload_prefilter', [ $this, 'filter_sideload_move_temp_file_to_s3' ] );
 		remove_filter( 'wp_generate_attachment_metadata', [ $this, 'set_filesize_in_attachment_meta' ] );
@@ -157,7 +165,7 @@ class Plugin {
 	/**
 	 * Get the s3:// path for the bucket.
 	 */
-	public function get_s3_path() {
+	public function get_s3_path() : string {
 		return 's3://' . $this->bucket;
 	}
 
@@ -533,6 +541,15 @@ class Plugin {
 			return new WP_Error( $e->getCode(), $e->getMessage() );
 		}
 
+		/**
+		 * Fires after ACL of files of an attachment is set.
+		 *
+		 * @param int $attachment_id Attachment whose ACL has been changed.
+		 * @param string $acl The new ACL that's been set.
+		 * @psalm-suppress TooManyArguments -- Currently do_action doesn't detect variable number of arguments.
+		 */
+		do_action( 's3_uploads_set_attachment_files_acl', $attachment_id, $acl );
+
 		return null;
 	}
 
@@ -543,22 +560,22 @@ class Plugin {
 	 * @return list<string> Array of all full paths to the attachment's files.
 	 */
 	public static function get_attachment_files( int $attachment_id ) : array {
-		$uploadpath = wp_get_upload_dir();
 		/** @var string */
 		$main_file = get_attached_file( $attachment_id );
+		$main_file_directory = dirname( $main_file );
 		$files = [ $main_file ];
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 		if ( isset( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $size => $sizeinfo ) {
-				$files[] = $uploadpath['basedir'] . $sizeinfo['file'];
+				$files[] = $main_file_directory . '/' . $sizeinfo['file'];
 			}
 		}
 
 		/** @var string|false */
 		$original_image = get_post_meta( $attachment_id, 'original_image', true );
 		if ( $original_image ) {
-			$files[] = $uploadpath['basedir'] . $original_image;
+			$files[] = $main_file_directory . '/' . $original_image;
 		}
 
 		/** @var array<string,array{file: string}> */
@@ -567,7 +584,7 @@ class Plugin {
 			foreach ( $backup_sizes as $size => $sizeinfo ) {
 				// Backup sizes only store the backup filename, which is relative to the
 				// main attached file, unlike the metadata sizes array.
-				$files[] = path_join( dirname( $main_file ), $sizeinfo['file'] );
+				$files[] = $main_file_directory . '/' . $sizeinfo['file'];
 			}
 		}
 
@@ -673,6 +690,10 @@ class Plugin {
 		$name = pathinfo( $filename, PATHINFO_FILENAME );
 		// The s3:// streamwrapper support listing by partial prefixes with wildcards.
 		// For example, scandir( s3://bucket/2019/06/my-image* )
-		return (array) scandir( trailingslashit( $dir ) . $name . '*' );
+		$scandir = scandir( trailingslashit( $dir ) . $name . '*' );
+		if ( $scandir === false ) {
+			$scandir = []; // Set as empty array for return
+		}
+		return $scandir;
 	}
 }

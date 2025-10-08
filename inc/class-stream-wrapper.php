@@ -119,7 +119,7 @@ class Stream_Wrapper {
 	public static function register(
 		Plugin $plugin,
 		$protocol = 's3',
-		CacheInterface $cache = null
+		?CacheInterface $cache = null
 	) {
 		if ( in_array( $protocol, stream_get_wrappers() ) ) {
 			stream_wrapper_unregister( $protocol );
@@ -486,7 +486,7 @@ class Stream_Wrapper {
 	private function statDirectory( $parts, $path, $flags ) {
 		// Stat "directories": buckets, or "s3://"
 		if ( ! $parts['Bucket'] ||
-			$this->getClient()->doesBucketExist( $parts['Bucket'] )
+			$this->getClient()->doesBucketExistV2( $parts['Bucket'], false )
 		) {
 			return $this->formatUrlStat( $path );
 		}
@@ -723,9 +723,13 @@ class Stream_Wrapper {
 		$this->objectIterator->next();
 
 		// Remove the prefix from the result to emulate other stream wrappers.
-		return $this->openedBucketPrefix
+		$retVal = $this->openedBucketPrefix
 			? substr( $result, strlen( $this->openedBucketPrefix ) )
 			: $result;
+		if ( $retVal === '' ) {
+			$retVal = false;
+		}
+		return $retVal;
 	}
 
 	private function formatKey( string $key ) : string {
@@ -816,9 +820,10 @@ class Stream_Wrapper {
 		/** @var string */
 		$key = $this->getOption( 'Key' );
 		if ( $mode == 'x' &&
-			$this->getClient()->doesObjectExist(
+			$this->getClient()->doesObjectExistV2(
 				$bucket,
 				$key,
+				false,
 				$this->getOptions( true )
 			)
 		) {
@@ -1031,7 +1036,7 @@ class Stream_Wrapper {
 	 * @return bool Returns true on success or false on failure
 	 */
 	private function createBucket( $path, array $params ) {
-		if ( $this->getClient()->doesBucketExist( $params['Bucket'] ) ) {
+		if ( $this->getClient()->doesBucketExistV2( $params['Bucket'], false ) ) {
 			return $this->triggerError( "Bucket already exists: {$path}" );
 		}
 
@@ -1058,7 +1063,7 @@ class Stream_Wrapper {
 		$params['Body'] = '';
 
 		// Fail if this pseudo directory key already exists
-		if ( $this->getClient()->doesObjectExist(
+		if ( $this->getClient()->doesObjectExistV2(
 			$params['Bucket'],
 			$params['Key']
 		)
