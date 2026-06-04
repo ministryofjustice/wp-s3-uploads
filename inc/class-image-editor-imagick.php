@@ -86,6 +86,14 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 			}
 	
 			$this->update_size(); // Update size metadata
+			$this->mime_type = $this->get_mime_type( $this->image->getImageFormat() );
+
+			// Preserve transparency: set background to transparent so Imagick doesn't
+			// composite against black when resizing PNGs or other images with alpha.
+			if ( $this->image->getImageAlphaChannel() ) {
+				$this->image->setImageBackgroundColor( 'transparent' );
+				$this->image->setBackgroundColor( 'transparent' );
+			}
 		} catch ( Exception $e ) {
 			return new WP_Error( 'image_load_error', $e->getMessage(), $this->file );
 		}
