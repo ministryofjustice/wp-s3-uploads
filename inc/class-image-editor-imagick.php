@@ -120,12 +120,14 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		/*
 		MOJ FIX - Patch to prevent black PDF backgrounds.
 		*/
-		try {
-            $this->image->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
-            $this->image->setBackgroundColor('#ffffff');
-        } catch (Exception $exception) {
-            error_log($exception->getMessage());
-        }
+		if ( mime_content_type( $this->file ) === 'application/pdf' ) {
+			try {
+				$this->image->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
+				$this->image->setBackgroundColor('#ffffff');
+			} catch (Exception $exception) {
+				error_log($exception->getMessage());
+			}
+		}
 
 		/**
 		 * @var WP_Error|array{path: string, file: string, width: int, height: int, mime-type: string}
