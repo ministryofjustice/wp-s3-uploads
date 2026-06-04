@@ -29,6 +29,13 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 	protected $remote_filename = null;
 
 	/**
+	 * Mime type of the source file, detected during load().
+	 *
+	 * @var ?string
+	 */
+	protected $source_mime_type = null;
+
+	/**
 	 * Hold on to a reference of all temp local files.
 	 *
 	 * These are cleaned up on __destruct.
@@ -63,6 +70,7 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		copy( $this->file, $temp_filename );
 		$this->remote_filename = $this->file;
 		$this->file = $temp_filename;
+		$this->source_mime_type = mime_content_type( $temp_filename );
 
 		/*
 		MOJ FIX - Load only first page of pdf
@@ -119,8 +127,11 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 
 		/*
 		MOJ FIX - Patch to prevent black PDF backgrounds.
+		Use $this->source_mime_type (detected from the local temp file during load()) rather
+		than mime_content_type( $this->file ), which is unreliable when $this->file is an S3
+		URL and could incorrectly strip alpha channels from PNGs and other transparent images.
 		*/
-		if ( mime_content_type( $this->file ) === 'application/pdf' ) {
+		if ( $this->source_mime_type === 'application/pdf' ) {
 			try {
 				$this->image->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
 				$this->image->setBackgroundColor('#ffffff');
