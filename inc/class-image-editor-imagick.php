@@ -141,8 +141,12 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		*/
 		if ( $this->source_mime_type === 'application/pdf' ) {
 			try {
-				$this->image->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
-				$this->image->setBackgroundColor('#ffffff');
+				// Set white background BEFORE removing alpha so Imagick composites
+				// against white rather than the transparent background set during load().
+				$this->image->setImageBackgroundColor( '#ffffff' );
+				$this->image->setBackgroundColor( '#ffffff' );
+				$this->image->setImageAlphaChannel( Imagick::ALPHACHANNEL_REMOVE );
+				$this->image->flattenImages();
 			} catch (Exception $exception) {
 				error_log($exception->getMessage());
 			}
