@@ -29,6 +29,13 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 	protected $remote_filename = null;
 
 	/**
+	 * Mime type of the source file, detected during load().
+	 *
+	 * @var ?string
+	 */
+	protected $source_mime_type = null;
+
+	/**
 	 * Hold on to a reference of all temp local files.
 	 *
 	 * These are cleaned up on __destruct.
@@ -63,6 +70,7 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 		copy( $this->file, $temp_filename );
 		$this->remote_filename = $this->file;
 		$this->file = $temp_filename;
+		$this->source_mime_type = mime_content_type( $temp_filename );
 
 		/*
 		MOJ FIX - Load only first page of pdf
@@ -78,6 +86,14 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 			}
 	
 			$this->update_size(); // Update size metadata
+			$this->mime_type = $this->get_mime_type( $this->image->getImageFormat() );
+
+			// Preserve transparency: set background to transparent so Imagick doesn't
+			// composite against black when resizing PNGs or other images with alpha.
+			if ( $this->image->getImageAlphaChannel() ) {
+				$this->image->setImageBackgroundColor( 'transparent' );
+				$this->image->setBackgroundColor( 'transparent' );
+			}
 		} catch ( Exception $e ) {
 			return new WP_Error( 'image_load_error', $e->getMessage(), $this->file );
 		}
@@ -119,13 +135,22 @@ class Image_Editor_Imagick extends WP_Image_Editor_Imagick {
 
 		/*
 		MOJ FIX - Patch to prevent black PDF backgrounds.
+		Use $this->source_mime_type (detected from the local temp file during load()) rather
+		than mime_content_type( $this->file ), which is unreliable when $this->file is an S3
+		URL and could incorrectly strip alpha channels from PNGs and other transparent images.
 		*/
-		try {
-            $this->image->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
-            $this->image->setBackgroundColor('#ffffff');
-        } catch (Exception $exception) {
-            error_log($exception->getMessage());
-        }
+		if ( $this->source_mime_type === 'application/pdf' ) {
+			try {
+				// Set white background BEFORE removing alpha so Imagick composites
+				// against white rather than the transparent background set during load().
+				$this->image->setImageBackgroundColor( '#ffffff' );
+				$this->image->setBackgroundColor( '#ffffff' );
+				$this->image->setImageAlphaChannel( Imagick::ALPHACHANNEL_REMOVE );
+				$this->image->flattenImages();
+			} catch (Exception $exception) {
+				error_log($exception->getMessage());
+			}
+		}
 
 		/**
 		 * @var WP_Error|array{path: string, file: string, width: int, height: int, mime-type: string}
