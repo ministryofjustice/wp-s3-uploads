@@ -2,6 +2,7 @@
 
 namespace S3_Uploads;
 
+use Exception;
 use Imagick;
 use WP_Error;
 use WP_Image_Editor_Imagick;
